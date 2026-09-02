@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="dkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f26a36" />
+      <stop offset="100%" stop-color="#ff8d54" />
+    </linearGradient>
+    <linearGradient id="dkTeal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#258f87" />
+      <stop offset="100%" stop-color="#4db6ac" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded Base -->
+  <rect width="48" height="48" rx="12" fill="#0c1015" />
+  <!-- Subtle inner ring -->
+  <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+  <!-- Mountain Peaks -->
+  <path d="M12 34 L21 21 L26 27 L33 17 L38 34 Z" fill="none" stroke="url(#dkGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Sun/Compass Star -->
+  <circle cx="24" cy="14" r="2.5" fill="url(#dkGrad)" />
+  <path d="M24 8 L24 10 M24 18 L24 20 M18 14 L20 14 M28 14 L30 14" stroke="#ff8d54" stroke-width="1.5" stroke-linecap="round" />
+  <!-- Elegant DK Accent Dot -->
+  <circle cx="36" cy="12" r="1.5" fill="url(#dkTeal)" />
+</svg>
