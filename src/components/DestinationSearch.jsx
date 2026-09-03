@@ -91,9 +91,13 @@ export function DestinationSearch({
   return (
     <div className="unified-search-panel-container" ref={containerRef}>
       {/* 1. Single Polished Travel Search Bar (Desktop: Single Row, Mobile: Clean Stack) */}
-      <form onSubmit={handleSubmit} className="unified-search-bar" role="search">
+      <form
+        onSubmit={handleSubmit}
+        className={`unified-search-bar ${isOpenSuggestions ? 'has-open-suggestions' : ''}`}
+        role="search"
+      >
         {/* Field 1: Destination */}
-        <div className="search-field-segment search-dest-segment">
+        <div className={`search-field-segment search-dest-segment ${isOpenSuggestions ? 'active-dropdown' : ''}`}>
           <div className="search-segment-icon">
             <Icon name="map-pin" size={18} />
           </div>

@@ -86,23 +86,34 @@ export function HeroCarousel({
       onTouchEnd={handleTouchEnd}
       aria-label="DK Holidays Cinematic Carousel"
     >
-      {/* Background with Framer Motion Crossfade & Subtle Zoom */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentSlide.id}
-          className="hero-background-layer"
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            backgroundImage: `url(${(currentSlide.image && currentSlide.image.startsWith('https://images.')) ? currentSlide.image : getDestinationPrimaryImage(currentSlide.id, currentSlide.image)})`,
-          }}
-        />
-      </AnimatePresence>
+      {/* Background with Framer Motion Crossfade & Subtle Zoom (Clipped to hero) */}
+      <div
+        className="hero-bg-frame"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide.id}
+            className="hero-background-layer"
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              backgroundImage: `url(${(currentSlide.image && currentSlide.image.startsWith('https://images.')) ? currentSlide.image : getDestinationPrimaryImage(currentSlide.id, currentSlide.image)})`,
+            }}
+          />
+        </AnimatePresence>
 
-      {/* Balanced Cinematic Gradient (Clear text readability, bright photography) */}
-      <div className="hero-gradient-overlay" />
+        {/* Balanced Cinematic Gradient (Clear text readability, bright photography) */}
+        <div className="hero-gradient-overlay" />
+      </div>
 
       {/* Hero Body Content */}
       <div className="container-xl hero-content-wrapper">

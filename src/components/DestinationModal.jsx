@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DESTINATIONS } from '../data/destinations';
 import { fetchLiveWeather } from '../services/weatherService';
 import { getDestinationPrimaryImage, handleDestinationImageError } from '../services/destinationImageService';
@@ -13,26 +13,70 @@ export function DestinationModal({
   isSaved,
   onToggleSave,
 }) {
-  // If no destination is selected, do not render the modal
-  if (!destinationId) return null;
-
-  const destination = DESTINATIONS.find((d) => d.id === destinationId);
-  if (!destination) return null;
-
   const [weather, setWeather] = useState(null);
+  const destination = destinationId ? DESTINATIONS.find((d) => d.id === destinationId) : null;
+  const savedScrollYRef = useRef(0);
 
-  // Close on Escape key
+  // Safely release fixed scroll lock and restore smooth native scrolling
+  const releaseScrollLock = () => {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.classList.remove('modal-open');
+    document.documentElement.classList.remove('modal-open');
+    if (savedScrollYRef.current > 0) {
+      window.scrollTo(0, savedScrollYRef.current);
+    }
+  };
+
+  // Safe close handler that restores scrolling immediately before parent state change
+  const handleSafeClose = () => {
+    releaseScrollLock();
+    if (onClose) onClose();
+  };
+
+  // Lock body & html scroll completely and fix background in place when modal is open
   useEffect(() => {
+    if (!destinationId || !destination) {
+      releaseScrollLock();
+      return;
+    }
+
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    savedScrollYRef.current = scrollY;
+
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('modal-open');
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+
+    return () => {
+      releaseScrollLock();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [destinationId]);
 
   useEffect(() => {
+    if (!destination) {
+      setWeather(null);
+      return;
+    }
     let isMounted = true;
     const loadWeather = async () => {
       const data = await fetchLiveWeather(
@@ -48,9 +92,49 @@ export function DestinationModal({
     };
   }, [destination]);
 
+  // If no destination is selected or found, render nothing (after all hooks have run)
+  if (!destinationId || !destination) return null;
+
   return (
-    <div className="ai-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      className="ai-modal-overlay"
+      onClick={handleSafeClose}
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      onWheel={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="dossier-light-window" onClick={(e) => e.stopPropagation()}>
+        {/* Sticky Top Bar with "Back to Home" and Close (Always visible even when scrolled) */}
+        <div className="dossier-sticky-top-bar">
+          <button
+            type="button"
+            className="dossier-back-home-btn"
+            onClick={handleSafeClose}
+            aria-label="Back to Home"
+          >
+            <Icon name="arrow-left" size={16} />
+            <span>Back to Home</span>
+          </button>
+
+          <div className="dossier-sticky-title">
+            {destination.name} · {destination.country}
+          </div>
+
+          <button
+            type="button"
+            className="dossier-close-circle-btn"
+            onClick={handleSafeClose}
+            aria-label="Close and return to Home"
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+
         {/* Hero Banner Header */}
         <div style={{ position: 'relative', height: '360px', overflow: 'hidden' }}>
           <img
@@ -82,25 +166,22 @@ export function DestinationModal({
           </div>
 
           <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(18, 22, 28, 0.7)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              zIndex: 10,
-            }}
+            type="button"
+            onClick={handleSafeClose}
+            className="dossier-hero-back-pill"
+            aria-label="Back to Home"
+          >
+            <Icon name="arrow-left" size={15} />
+            <span>Back to Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSafeClose}
+            className="dossier-hero-close-pill"
             aria-label="Close Dossier"
           >
-            <Icon name="x" size={20} />
+            <Icon name="x" size={18} />
           </button>
         </div>
 
@@ -117,7 +198,17 @@ export function DestinationModal({
             gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              onClick={handleSafeClose}
+            >
+              <Icon name="arrow-left" size={14} />
+              <span>Back to Home</span>
+            </button>
+
             <button
               className="btn-secondary"
               style={{ padding: '8px 16px', fontSize: '0.85rem' }}
@@ -131,7 +222,7 @@ export function DestinationModal({
               className="btn-secondary"
               style={{ padding: '8px 16px', fontSize: '0.85rem' }}
               onClick={() => {
-                onClose();
+                handleSafeClose();
                 onAskAi(destination);
               }}
             >
@@ -143,7 +234,7 @@ export function DestinationModal({
               className="btn-secondary"
               style={{ padding: '8px 16px', fontSize: '0.85rem' }}
               onClick={() => {
-                onClose();
+                handleSafeClose();
                 onViewWeather(destination.id);
               }}
             >
@@ -156,7 +247,7 @@ export function DestinationModal({
             className="btn-primary"
             style={{ padding: '9px 20px', fontSize: '0.88rem' }}
             onClick={() => {
-              onClose();
+              handleSafeClose();
               onBuildItinerary(destination.id);
             }}
           >
@@ -330,20 +421,39 @@ export function DestinationModal({
             </p>
           </div>
 
-          {/* Footer CTA */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-            <button className="btn-secondary" onClick={onClose}>
-              Close
-            </button>
+          {/* Footer CTA with Back to Home & Plan Trip */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '14px',
+              paddingTop: '20px',
+              borderTop: '1px solid var(--border-light)',
+            }}
+          >
             <button
+              type="button"
+              className="btn-secondary"
+              style={{ padding: '10px 20px', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              onClick={handleSafeClose}
+            >
+              <Icon name="arrow-left" size={15} />
+              <span>Back to Home</span>
+            </button>
+
+            <button
+              type="button"
               className="btn-primary"
+              style={{ padding: '10px 22px', fontSize: '0.88rem' }}
               onClick={() => {
-                onClose();
+                handleSafeClose();
                 onBuildItinerary(destination.id);
               }}
             >
               <span>✦ Build Day-by-Day Itinerary for {destination.name}</span>
-              <Icon name="arrow-right" size={16} />
+              <Icon name="arrow-right" size={15} />
             </button>
           </div>
         </div>

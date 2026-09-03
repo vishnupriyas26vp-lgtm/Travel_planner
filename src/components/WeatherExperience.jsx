@@ -76,6 +76,7 @@ export function WeatherExperience({
 
         {/* Location & Search Controls Bar */}
         <div
+          className="weather-controls-bar"
           style={{
             background: '#ffffff',
             border: '1px solid rgba(0, 0, 0, 0.08)',

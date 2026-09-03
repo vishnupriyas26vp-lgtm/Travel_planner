@@ -44,6 +44,8 @@ export function TripArchitect({
   const [isAddingCustomActivity, setIsAddingCustomActivity] = useState(false);
   const [customActivityTitle, setCustomActivityTitle] = useState('');
   const [customActivityTime, setCustomActivityTime] = useState('15:00');
+  const [showAllMobileDestinations, setShowAllMobileDestinations] = useState(false);
+  const [destinationSearch, setDestinationSearch] = useState('');
 
   // Currency state & live exchange rates
   const [exchangeRates, setExchangeRates] = useState(null);
@@ -241,36 +243,86 @@ export function TripArchitect({
           </div>
 
           {/* STEP 1: Destination Selection */}
-          {currentStep === 1 && (
-            <div>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
-                Select or Search your Destination
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-                {DESTINATIONS.map((dest) => {
-                  const isSelected = formData.destinationId === dest.id;
-                  return (
-                    <div
-                      key={dest.id}
-                      onClick={() => setFormData({ ...formData, destinationId: dest.id })}
-                      style={{
-                        padding: '16px',
-                        borderRadius: '16px',
-                        background: isSelected ? '#fff9f6' : '#faf9f6',
-                        border: isSelected ? '2px solid var(--accent-orange)' : '1px solid rgba(0,0,0,0.08)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
+          {currentStep === 1 && (() => {
+            const filteredDestinations = destinationSearch.trim()
+              ? DESTINATIONS.filter(
+                  (d) =>
+                    d.name.toLowerCase().includes(destinationSearch.toLowerCase()) ||
+                    d.country.toLowerCase().includes(destinationSearch.toLowerCase()) ||
+                    (d.state && d.state.toLowerCase().includes(destinationSearch.toLowerCase())) ||
+                    (d.tag && d.tag.toLowerCase().includes(destinationSearch.toLowerCase()))
+                )
+              : DESTINATIONS;
+
+            return (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    Select or Search your Destination
+                  </h3>
+
+                  {/* Instant Search Bar */}
+                  <div className="step-dest-search-wrapper">
+                    <Icon name="search" size={15} style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      value={destinationSearch}
+                      onChange={(e) => setDestinationSearch(e.target.value)}
+                      placeholder="Search destination or country..."
+                      className="step-dest-search-input"
+                    />
+                    {destinationSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setDestinationSearch('')}
+                        style={{ padding: '2px 4px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
+                        aria-label="Clear search"
+                      >
+                        <Icon name="x" size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="step-dest-grid">
+                  {filteredDestinations.map((dest, idx) => {
+                    const isSelected = formData.destinationId === dest.id;
+                    // On mobile: display limited 6 cards unless expanded or searching or this card is currently selected
+                    const isHiddenOnMobile = !destinationSearch && !showAllMobileDestinations && idx >= 6 && !isSelected;
+
+                    return (
+                      <div
+                        key={dest.id}
+                        onClick={() => setFormData({ ...formData, destinationId: dest.id })}
+                        className={`step-dest-card ${isSelected ? 'selected' : ''} ${isHiddenOnMobile ? 'step-dest-card-mobile-hidden' : ''}`}
+                      >
+                        <div className="step-dest-card-name">{dest.name}</div>
+                        <div className="step-dest-card-location">{dest.state || dest.country}</div>
+                        <div className="step-dest-card-tag">{dest.tag}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile View More / Show Less Toggle Button */}
+                {!destinationSearch && filteredDestinations.length > 6 && (
+                  <div className="step-dest-view-more-wrap">
+                    <button
+                      type="button"
+                      className="step-dest-view-more-btn"
+                      onClick={() => setShowAllMobileDestinations((prev) => !prev)}
                     >
-                      <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem' }}>{dest.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{dest.state || dest.country}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--accent-orange)', fontWeight: 600, marginTop: '4px' }}>{dest.tag}</div>
-                    </div>
-                  );
-                })}
+                      <span>
+                        {showAllMobileDestinations
+                          ? 'Show Less Destinations ↑'
+                          : `View More Destinations (${filteredDestinations.length - 6} more) ↓`}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* STEP 2: Duration / Dates */}
           {currentStep === 2 && (

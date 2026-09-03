@@ -100,6 +100,19 @@ export function App() {
     setActiveDossierId(destId);
   };
 
+  const handleCloseDossier = () => {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.classList.remove('modal-open');
+    document.documentElement.classList.remove('modal-open');
+    setActiveDossierId(null);
+  };
+
   const handleStartPlan = (destId) => {
     if (destId && typeof destId === 'string') {
       setPlannerDestinationId(destId);
@@ -137,8 +150,22 @@ export function App() {
         userLocation={userLocation}
         onRequestLocation={handleRequestLocation}
         isLocating={isLocating}
-        onOpenAiPlanner={() => setIsAiOpen(true)}
-        onNavigateToPlanner={() => handleStartPlan()}
+        onOpenAiPlanner={() => {
+          handleCloseDossier();
+          setIsSavedOpen(false);
+          setIsAiOpen(true);
+        }}
+        onNavigateToPlanner={() => {
+          handleCloseDossier();
+          setIsSavedOpen(false);
+          setIsAiOpen(false);
+          handleStartPlan();
+        }}
+        onCloseModals={() => {
+          handleCloseDossier();
+          setIsAiOpen(false);
+          setIsSavedOpen(false);
+        }}
       />
 
       <main>
@@ -221,7 +248,7 @@ export function App() {
       {/* Destination Dossier Modal */}
       <DestinationModal
         destinationId={activeDossierId}
-        onClose={() => setActiveDossierId(null)}
+        onClose={handleCloseDossier}
         onBuildItinerary={handleStartPlan}
         onAskAi={(dest) => {
           setAiDestination(dest);
@@ -235,9 +262,10 @@ export function App() {
         onToggleSave={handleToggleSaveDestination}
       />
 
-      {/* DK AI Assistant Modal */}
+      {/* DK AI Assistant Floating Widget */}
       <AiAssistant
         isOpen={isAiOpen}
+        onToggle={() => setIsAiOpen((prev) => !prev)}
         onClose={() => {
           setIsAiOpen(false);
           setAiDestination(null);

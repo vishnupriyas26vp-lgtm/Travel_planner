@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from './Icons';
 
 export function Navbar({
@@ -7,6 +7,7 @@ export function Navbar({
   isLocating,
   onOpenAiPlanner,
   onNavigateToPlanner,
+  onCloseModals,
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -20,10 +21,48 @@ export function Navbar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body & html scroll completely and fix background in place when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.classList.add('menu-open');
+      document.documentElement.classList.add('menu-open');
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') setIsMobileMenuOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.classList.remove('menu-open');
+        document.documentElement.classList.remove('menu-open');
+        window.scrollTo(0, scrollY);
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isMobileMenuOpen]);
+
   const handleNavClick = (sectionId) => {
     setIsMobileMenuOpen(false);
-    const elem = document.getElementById(sectionId);
-    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+    if (onCloseModals) onCloseModals();
+    setTimeout(() => {
+      const elem = document.getElementById(sectionId);
+      if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   };
 
   return (
@@ -36,7 +75,11 @@ export function Navbar({
             className="nav-brand-logo"
             onClick={(e) => {
               e.preventDefault();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (onCloseModals) onCloseModals();
+              setIsMobileMenuOpen(false);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 50);
             }}
           >
             <span className="brand-dk-gold">
@@ -103,7 +146,8 @@ export function Navbar({
               type="button"
               className="mobile-hamburger-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle navigation menu"
+              aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isMobileMenuOpen}
             >
               <Icon name={isMobileMenuOpen ? 'x' : 'menu'} size={24} />
             </button>
@@ -111,81 +155,128 @@ export function Navbar({
         </div>
       </header>
 
-      {/* Mobile Drawer Navigation (Zero Horizontal Overflow) */}
-      {isMobileMenuOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(12, 16, 25, 0.95)',
-            backdropFilter: 'blur(16px)',
-            zIndex: 999,
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '80px 24px 32px 24px',
-            boxSizing: 'border-box',
-          }}
-        >
+      {/* Mobile Backdrop (Darkened overlay on the right, closes drawer on click) */}
+      <div
+        className={`mobile-nav-backdrop ${isMobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        onTouchMove={(e) => e.preventDefault()}
+        onWheel={(e) => e.preventDefault()}
+        aria-hidden="true"
+      />
+
+      {/* Mobile Navigation Drawer (Appears from Left to Right) */}
+      <aside
+        className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+        aria-label="Mobile Navigation Menu"
+        aria-hidden={!isMobileMenuOpen}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mobile-nav-header">
+          <a
+            href="#"
+            className="nav-brand-logo"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <span className="brand-dk-gold">
+              DK
+              <span className="brand-dk-star">✦</span>
+            </span>
+            <span>Holidays</span>
+          </a>
+
           <button
             type="button"
+            className="mobile-nav-close-btn"
             onClick={() => setIsMobileMenuOpen(false)}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              color: '#ffffff',
-              padding: '10px',
-            }}
             aria-label="Close menu"
           >
-            <Icon name="x" size={24} />
+            <Icon name="x" size={22} />
+          </button>
+        </div>
+
+        <nav className="mobile-nav-links" aria-label="Mobile navigation links">
+          <a
+            href="#discover"
+            className="mobile-nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('discover');
+            }}
+          >
+            Discover
+          </a>
+          <a
+            href="#destinations"
+            className="mobile-nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('destinations');
+            }}
+          >
+            Destinations
+          </a>
+          <a
+            href="#weather"
+            className="mobile-nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('weather');
+            }}
+          >
+            Weather & Location
+          </a>
+          <a
+            href="#planner"
+            className="mobile-nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('planner');
+            }}
+          >
+            Plan a Trip
+          </a>
+          <a
+            href="#about"
+            className="mobile-nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('about');
+            }}
+          >
+            About DK Holidays
+          </a>
+        </nav>
+
+        <div className="mobile-nav-footer">
+          <button
+            type="button"
+            className="search-unified-submit-btn mobile-nav-ai-btn"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onOpenAiPlanner();
+            }}
+          >
+            <span>✦ Open DK AI Travel Assistant</span>
           </button>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1.25rem', fontWeight: 700, color: '#ffffff' }}>
-            <a href="#discover" onClick={(e) => { e.preventDefault(); handleNavClick('discover'); }}>
-              Discover
-            </a>
-            <a href="#destinations" onClick={(e) => { e.preventDefault(); handleNavClick('destinations'); }}>
-              Destinations
-            </a>
-            <a href="#weather" onClick={(e) => { e.preventDefault(); handleNavClick('weather'); }}>
-              Weather & Location
-            </a>
-            <a href="#planner" onClick={(e) => { e.preventDefault(); handleNavClick('planner'); }}>
-              Plan a Trip
-            </a>
-            <a href="#about" onClick={(e) => { e.preventDefault(); handleNavClick('about'); }}>
-              About DK Holidays
-            </a>
-          </div>
-
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button
-              type="button"
-              className="search-unified-submit-btn"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onOpenAiPlanner();
-              }}
-              style={{ justifyContent: 'center' }}
-            >
-              <span>✦ Open DK AI Travel Assistant</span>
-            </button>
-            <button
-              type="button"
-              className="btn-view-all"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onRequestLocation();
-              }}
-              style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)', justifyContent: 'center' }}
-            >
-              <Icon name="navigation" size={14} />
-              <span>{userLocation?.city || 'Use My Location'}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn-view-all mobile-nav-loc-btn"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onRequestLocation();
+            }}
+          >
+            <Icon name="navigation" size={14} />
+            <span>{userLocation?.city || 'Use My Location'}</span>
+          </button>
         </div>
-      )}
+      </aside>
     </>
   );
 }
