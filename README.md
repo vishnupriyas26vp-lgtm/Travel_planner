@@ -84,7 +84,28 @@ Exact required destinations and master copy:
   - HTML5 Geolocation & OpenStreetMap Nominatim Reverse Geocoding
 
 ---
+## 📸 Screenshots
 
+### 1. Hero & Destination Search
+![DK Holidays Hero](./screenshots/01_hero_carousel_and_search.png)
+
+### 2. Destination Explorer
+![Destination Explorer](./screenshots/02_destination_explorer.png)
+
+### 3. Destination Dossier
+![Destination Dossier](./screenshots/03_destination_dossier_modal.png)
+
+### 4. Live Weather & Experience
+![Weather Experience](./screenshots/04_weather_experience.png)
+
+### 5. DK AI Assistant
+![DK AI Assistant](./screenshots/05_dk_ai_assistant.png)
+
+### 6. Trip Architect
+![Trip Architect](./screenshots/06_trip_architect_steps.png)
+
+### 7. Generated Day-by-Day Itinerary
+![Generated Itinerary](./screenshots/07_itinerary_results_timeline.png)
 ## 🚀 Getting Started
 
 ### Prerequisites
